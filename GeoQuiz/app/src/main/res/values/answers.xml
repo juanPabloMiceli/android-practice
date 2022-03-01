@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i1_question_1">Painyong</string>
+    <string name="i2_question_1">Poinyang</string>
+    <string name="i3_question_1">Pianyong</string>
+    <string name="c_question_1">Pionyang</string>
+    <string name="i1_question_2">Florianopolis</string>
+    <string name="i2_question_2">Brasilia</string>
+    <string name="i3_question_2">Sao Pablo</string>
+    <string name="c_question_2">Rio De Janeiro</string>
+    <string name="i1_question_3">Costa Rica</string>
+    <string name="i2_question_3">Ecuador</string>
+    <string name="i3_question_3">Colombia</string>
+    <string name="c_question_3">Venezuela</string>
+</resources>

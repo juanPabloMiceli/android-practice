@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">GeoQuiz</string>
+    <string name="correct_toast">🥳🥳🥳</string>
+    <string name="incorrect_toast">❌❌❌</string>
+    <string name="cheat_button">No se bro 😔</string>
+    <string name="warning_text">En serio no lo sabes? Que vergüenza…</string>
+    <string name="show_answer_button">Dale mostrame!</string>
+    <string name="judgment_toast">Con trampa cualquiera… </string>
+</resources>
