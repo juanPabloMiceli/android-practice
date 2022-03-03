@@ -1,10 +1,13 @@
 package com.example.geoquiz
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+
+private const val EXTRA_ANSWER: String = "com.example.geoquiz.answer"
 
 class CheatActivity: Activity() {
 
@@ -15,7 +18,11 @@ class CheatActivity: Activity() {
 
 
     companion object{
-        val EXTRA_ANSWER: String = "com.example.geoquiz.answer"
+        fun newIntent(packageContext: Context, answer: Int): Intent{
+            return Intent(packageContext, CheatActivity::class.java).apply {
+                putExtra(EXTRA_ANSWER, answer)
+            }
+        }
         val EXTRA_ANSWER_SHOWN: String = "com.example.geoquiz.answer_shown"
 
     }
@@ -63,8 +70,9 @@ class CheatActivity: Activity() {
     }
 
     private fun setAnswerShownResult(isAnswerShown: Boolean) {
-        val data = Intent()
-        data.putExtra(EXTRA_ANSWER_SHOWN, isAnswerShown)
+        val data: Intent = Intent().apply {
+            putExtra(EXTRA_ANSWER_SHOWN, isAnswerShown)
+        }
         setResult(RESULT_OK, data)
     }
 

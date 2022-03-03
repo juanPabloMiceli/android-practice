@@ -43,4 +43,5 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
     compileOnly 'org.projectlombok:lombok:1.18.22'
     annotationProcessor 'org.projectlombok:lombok:1.18.22' //or v. 1.16.2 in your case.
+    implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
 }

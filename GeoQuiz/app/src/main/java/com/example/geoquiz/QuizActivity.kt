@@ -12,6 +12,11 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
+
+private const val TAG: String = "QuizActivity"
+private const val INDEX_KEY: String = "indexKey"
+private const val CHEATER_KEY: String = "cheaterKey"
 
 class QuizActivity : AppCompatActivity() {
 
@@ -23,21 +28,24 @@ class QuizActivity : AppCompatActivity() {
     private lateinit var mNextButton: ImageButton
     private lateinit var mPrevButton: ImageButton
     private lateinit var mCheatButton: Button
-    private var mIsCheater: Boolean = false
-    private var mCurrentIndex: Int = 0
-    private val TAG: String = "QuizActivity"
-    private val INDEX_KEY: String = "indexKey"
-    private val CHEATER_KEY: String = "cheaterKey"
+
+    private val geoQuizViewModel: GeoQuizViewModel by lazy {
+        ViewModelProvider(this).get(GeoQuizViewModel::class.java)
+    }
+
+    override fun onDestroy(){
+        super.onDestroy()
+        Log.d(TAG, "Goodbye cruel world :(")
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "Creating activity")
         supportActionBar?.subtitle = "API level ${Build.VERSION.SDK_INT}"
-        if (savedInstanceState != null) {
-            mCurrentIndex = savedInstanceState.getInt(INDEX_KEY, 0)
-            mIsCheater = savedInstanceState.getBoolean(CHEATER_KEY)
-        }
+
+        geoQuizViewModel.mCurrentIndex = savedInstanceState?.getInt(INDEX_KEY) ?: 0
+        geoQuizViewModel.mIsCheater = savedInstanceState?.getBoolean(CHEATER_KEY) ?: false
         setContentView(R.layout.activity_quiz)
 
         loadViews()
@@ -48,22 +56,17 @@ class QuizActivity : AppCompatActivity() {
     override fun onSaveInstanceState(savedInstanceState: Bundle) {
         super.onSaveInstanceState(savedInstanceState)
         Log.i(TAG, "Saving instance state")
-        savedInstanceState.putInt(INDEX_KEY, mCurrentIndex)
-        savedInstanceState.putBoolean(CHEATER_KEY, mIsCheater)
+        savedInstanceState.putInt(INDEX_KEY, geoQuizViewModel.mCurrentIndex)
+        savedInstanceState.putBoolean(CHEATER_KEY, geoQuizViewModel.mIsCheater)
     }
-    private var mQuestionBank = mutableListOf(
-        Question(R.string.question_1, R.string.c_question_1, mutableListOf(R.string.i1_question_1, R.string.c_question_1, R.string.i2_question_1, R.string.i3_question_1)),
-        Question(R.string.question_2, R.string.c_question_2, mutableListOf(R.string.c_question_2, R.string.i1_question_2, R.string.i2_question_2, R.string.i3_question_2)),
-        Question(R.string.question_3, R.string.c_question_3, mutableListOf(R.string.i1_question_3, R.string.i2_question_3, R.string.i3_question_3, R.string.c_question_3)),
-    )
 
     private fun updateQuestion(){
-        val questionId: Int = mQuestionBank[mCurrentIndex].mQuestion
+        val questionId: Int = geoQuizViewModel.currentQuestionText
         mQuestionTextView.setText(questionId)
-        mAnswer1.setText(getAnswerByButtonPosition(0))
-        mAnswer2.setText(getAnswerByButtonPosition(1))
-        mAnswer3.setText(getAnswerByButtonPosition(2))
-        mAnswer4.setText(getAnswerByButtonPosition(3))
+        mAnswer1.setText(geoQuizViewModel.answerAtButtonPosition(0))
+        mAnswer2.setText(geoQuizViewModel.answerAtButtonPosition(1))
+        mAnswer3.setText(geoQuizViewModel.answerAtButtonPosition(2))
+        mAnswer4.setText(geoQuizViewModel.answerAtButtonPosition(3))
     }
 
     private fun loadViews(){
@@ -77,59 +80,48 @@ class QuizActivity : AppCompatActivity() {
         mCheatButton = findViewById(R.id.cheat_button)
     }
 
-    private fun currentCorrectAnswer(): Int{
-        return mQuestionBank[mCurrentIndex].mCorrectAnswer
-    }
-
     private val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
             result: ActivityResult ->
-        val data: Intent = result.data ?: return@registerForActivityResult
-        mIsCheater = data.getBooleanExtra(CheatActivity.EXTRA_ANSWER_SHOWN, false)
+        geoQuizViewModel.mIsCheater = result.data?.getBooleanExtra(CheatActivity.EXTRA_ANSWER_SHOWN, false) ?: false
     }
 
     private fun setListeners(){
         mNextButton.setOnClickListener{
-            mCurrentIndex = (mCurrentIndex+1)%mQuestionBank.size
-            mIsCheater = false
+            geoQuizViewModel.moveToNext()
+            geoQuizViewModel.mIsCheater = false
             updateQuestion()
         }
         mPrevButton.setOnClickListener{
-            mCurrentIndex = ((mCurrentIndex-1)+mQuestionBank.size)%mQuestionBank.size
-            mIsCheater = false
+            geoQuizViewModel.moveToPrevious()
+            geoQuizViewModel.mIsCheater = false
             updateQuestion()
         }
         mAnswer1.setOnClickListener {
-            checkAnswer(getAnswerByButtonPosition(0))
+            checkAnswer(geoQuizViewModel.answerAtButtonPosition(0))
         }
         mAnswer2.setOnClickListener{
-            checkAnswer(getAnswerByButtonPosition(1))
+            checkAnswer(geoQuizViewModel.answerAtButtonPosition(1))
         }
         mAnswer3.setOnClickListener {
-            checkAnswer(getAnswerByButtonPosition(2))
+            checkAnswer(geoQuizViewModel.answerAtButtonPosition(2))
         }
         mAnswer4.setOnClickListener {
-            checkAnswer(getAnswerByButtonPosition(3))
+            checkAnswer(geoQuizViewModel.answerAtButtonPosition(3))
         }
         mCheatButton.setOnClickListener{
-            val payloadIntent: Intent = Intent(this,CheatActivity::class.java).apply {
-                putExtra(CheatActivity.EXTRA_ANSWER, currentCorrectAnswer())
-            }
+            val payloadIntent: Intent = CheatActivity.newIntent(this@QuizActivity, geoQuizViewModel.currentQuestionAnswer)
             startForResult.launch(payloadIntent)
         }
     }
 
-    private fun getAnswerByButtonPosition(optionPressed: Int): Int{
-        return mQuestionBank[mCurrentIndex].mAnswers[optionPressed]
-    }
-
     private fun checkAnswer(answer: Int){
-        val correctAnswer = currentCorrectAnswer()
+        val correctAnswer = geoQuizViewModel.currentQuestionAnswer
         val toastMessageId: Int = when {
-            mIsCheater -> R.string.judgment_toast
+            geoQuizViewModel.mIsCheater -> R.string.judgment_toast
             answer == correctAnswer -> R.string.correct_toast
             else -> R.string.incorrect_toast
         }
-        Toast.makeText(this, toastMessageId, Toast.LENGTH_SHORT).show()
+        Toast.makeText(this@QuizActivity, toastMessageId, Toast.LENGTH_SHORT).show()
     }
 
 
